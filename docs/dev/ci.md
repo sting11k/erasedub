@@ -69,10 +69,8 @@ which the READMEs use) are mapped to the local checkout with `--remap`. So they 
 checked offline, anchors included, against the files of the commit being checked. Links inside HTML comments and
 code blocks are not checked.
 
-`lychee.toml` excludes `ghcr.io/sting11k/erasedub`: the image page exists once the first release tag has pushed the image.
-Delete that line after the first release ([release-checklist.md](release-checklist.md)). Do not link to line numbers of repository files
-(`.../blob/main/docs/cli.md#L10`): GitHub accepts them, but the offline check cannot verify them and reports them
-as broken.
+Do not link to line numbers of repository files (`.../blob/main/docs/cli.md#L10`): GitHub accepts them, but the
+offline check cannot verify them and reports them as broken.
 
 lychee has no pre-commit hook we can use: its `lychee` hook installs cargo-binstall with `curl | bash`, and
 `lychee-docker` pulls an image by tag. Install the official release binary instead, pinned and verified:

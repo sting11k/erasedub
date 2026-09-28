@@ -58,8 +58,6 @@ themselves (version bump, tag, publish) are in [the release process](branching-a
 - [ ] Add badges only for things that exist (CI, licence) — no placeholder badges.
 - [ ] All relative links resolve; README.md uses absolute GitHub URLs. The `links (offline)` check is green, and
       a manual run of `links (external)` (Actions → Links → Run workflow) is green or its failures are understood.
-- [ ] **First release only:** after the tag has pushed the image to GHCR, delete the `ghcr.io/sting11k/erasedub` exclusion
-      from `lychee.toml`, then run `links (external)` again.
 - [ ] `uv run pre-commit run --all-files` is clean.
 
 Then follow [the release process](branching-and-releases.md#release-process). After publication, add the demo

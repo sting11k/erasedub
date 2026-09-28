@@ -19,9 +19,6 @@ accept = ["200..=299", "429"]
 exclude_loopback = true
 
 exclude = [
-  # The container image page exists once the first release tag has pushed the image (release.yml).
-  # Delete this line after that release (docs/dev/release-checklist.md).
-  '^https://ghcr\.io/sting11k/erasedub(/|$)',
   # Docker host alias used in a compose example; not a real host.
   '^https?://host\.docker\.internal',
 ]
