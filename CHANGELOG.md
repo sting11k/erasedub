@@ -8,7 +8,7 @@ While the version is `0.x`, minor releases may contain breaking changes; they ar
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-09-26
+## [0.1.0] - 2026-09-28
 
 First release.
 
