@@ -1,0 +1,11 @@
+# Code owners are requested for review automatically. See
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# The `@EraseDub/maintainers` team needs write access to the repository.
+
+*                   @EraseDub/maintainers
+
+# Workflows and release plumbing hold publishing rights: always a maintainer review.
+/.github/           @EraseDub/maintainers
+/pyproject.toml     @EraseDub/maintainers
+/uv.lock            @EraseDub/maintainers
+/Dockerfile         @EraseDub/maintainers

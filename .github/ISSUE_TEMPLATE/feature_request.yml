@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest an improvement or a new provider (eraser, ASR, OCR, translator, TTS, ...).
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For open-ended ideas, a [Discussion](https://github.com/EraseDub/erasedub/discussions) is often a
+        better first step. New providers can also live in their own package — see
+        [docs/plugins.md](https://github.com/EraseDub/erasedub/blob/main/docs/plugins.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work? Include CLI flags or config you imagine.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds or other tools you tried.
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Licenses and costs
+      description: |
+        If this needs a model, library or online service: its license (especially non-commercial terms),
+        whether it needs an API key or a GPU, and its official download source.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to work on this myself.

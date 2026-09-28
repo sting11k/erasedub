@@ -1,0 +1,86 @@
+name: Links
+
+# Broken-link check for README.md, README.vi.md, README.zh-CN.md and docs/ with lychee (lychee.toml).
+# - `links (offline)` runs on every PR and push: relative links, `#anchors`, and links to files in this
+#   repository (github.com/EraseDub/erasedub/blob|tree|raw/main/... is mapped to the checkout). Required.
+# - `links (external)` fetches every external URL once a week and on demand. It never runs on PRs, so a
+#   flaky website cannot block a merge; a failure shows up as a red scheduled run.
+# Local commands: docs/dev/ci.md ("Checking links").
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 4 * * 1" # weekly, Monday 04:41 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Official release binary, verified by sha256 (the GitHub release asset digest of
+  # lychee-x86_64-unknown-linux-gnu.tar.gz). Bump both together; same values in docs/dev/ci.md.
+  LYCHEE_VERSION: "0.24.2"
+  LYCHEE_SHA256: "1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  offline:
+    name: links (offline)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install lychee
+        run: |
+          archive="${RUNNER_TEMP}/lychee.tar.gz"
+          curl --proto '=https' --tlsv1.2 -sSfL -o "${archive}" \
+            "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${LYCHEE_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}" --strip-components=1 lychee-x86_64-unknown-linux-gnu/lychee
+          "${RUNNER_TEMP}/lychee" --version
+      - name: Check relative links and anchors
+        run: >-
+          "${RUNNER_TEMP}/lychee" --config lychee.toml --offline
+          --remap "^https://github\.com/EraseDub/erasedub/(?:blob|tree|raw)/main/ file://${PWD// /%20}/"
+          README.md README.vi.md README.zh-CN.md docs
+
+  external:
+    name: links (external)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install lychee
+        run: |
+          archive="${RUNNER_TEMP}/lychee.tar.gz"
+          curl --proto '=https' --tlsv1.2 -sSfL -o "${archive}" \
+            "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${LYCHEE_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}" --strip-components=1 lychee-x86_64-unknown-linux-gnu/lychee
+          "${RUNNER_TEMP}/lychee" --version
+      - name: Check all links, including external URLs
+        env:
+          # Read-only token: lychee uses it for github.com links to avoid anonymous rate limits.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          "${RUNNER_TEMP}/lychee" --config lychee.toml
+          --remap "^https://github\.com/EraseDub/erasedub/(?:blob|tree|raw)/main/ file://${PWD// /%20}/"
+          README.md README.vi.md README.zh-CN.md docs

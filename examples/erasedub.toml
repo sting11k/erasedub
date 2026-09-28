@@ -1,0 +1,50 @@
+# Example EraseDub configuration. Copy to ./erasedub.toml and edit.
+# Precedence: built-in defaults < this file < command-line options.
+# API keys and tokens NEVER go here — set them as environment variables
+# (OPENAI_API_KEY, GEMINI_API_KEY, ANTHROPIC_API_KEY, ELEVENLABS_API_KEY, ...).
+
+[general]
+workdir = "work"                 # per-video working folders: work/<video-name>/
+# output_dir = "outputs"         # default: next to the input video
+source_language = "auto"         # or "zh", "en", ...
+target_languages = ["vi"]        # verified: vi, en, zh — others work but are not checked by hand
+
+[erase]
+enabled = "auto"                 # auto: erase when a GPU backend is usable, otherwise skip with a notice
+provider = "sttn"                # sttn | propainter | lama | none
+# Opt-in erasers, each with its own extra (uv sync --extra <name>); none is ever picked for you:
+# provider = "propainter"        # NVIDIA GPU; S-Lab License 1.0: non-commercial use only
+# provider = "lama"              # no NVIDIA GPU needed: CPU or Apple GPU; per-frame:
+#                                # may flicker and flatten repeating patterned backgrounds
+gpu = "local"                    # local | modal (your own Modal account)
+
+[asr]
+provider = "whisperx"
+model = "auto"                   # auto = large model on GPU, small model on CPU
+
+[ocr]
+provider = "rapidocr"
+
+[translate]
+provider = "google"              # google (free) | openai | gemini | claude | ollama
+style = "faithful"               # faithful | natural (LLM providers only)
+
+[translate.glossary]
+# "原文" = "your preferred translation"
+
+[tts]
+enabled = true
+provider = "edge"                # edge (free) | elevenlabs (your key)
+voice = "auto"
+
+[subtitles]
+enabled = true
+layout = "bottom"
+
+[audio]
+original = "keep"                # keep the original soundtrack under the new voice, or "mute"
+original_volume = 0.25
+voice_volume = 1.0
+# music = "music/background.mp3"
+music_volume = 0.15
+loudnorm = true

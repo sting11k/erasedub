@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and help
+    url: https://github.com/EraseDub/erasedub/discussions
+    about: Ask usage questions and share results in GitHub Discussions.
+  - name: Report a security vulnerability
+    url: https://github.com/EraseDub/erasedub/security/advisories/new
+    about: Report security problems privately. Please do not open a public issue.

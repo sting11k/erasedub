@@ -1,0 +1,105 @@
+name: Bug report
+description: Something in EraseDub does not work as documented.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Installation failures have their own form
+        ("Installation problem"); questions belong in [Discussions](https://github.com/EraseDub/erasedub/discussions).
+
+        **Remove API keys, tokens and signed URLs from everything you paste below**, and personal
+        information such as your user name in file paths (`C:\Users\<user>\...`, `/home/<user>/...`) —
+        `erasedub doctor` and tracebacks print absolute paths.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and discussions and did not find this problem.
+          required: true
+        - label: I removed API keys, tokens, signed URLs and personal info (such as my user name in paths) from the logs and config below.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: Rendering finished, but the dubbed audio is out of sync after about 30 seconds.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command or WebUI steps
+      description: The exact command you ran, or the WebUI options you selected.
+      render: shell
+      placeholder: erasedub run clip.mp4 --to vi --gpu local
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: erasedub.toml
+      description: Your config file, if you use one. It never contains keys.
+      render: toml
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `erasedub doctor`
+      description: It never prints key values, only whether a key is set. Replace your user name in paths with `<user>`.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - From source with uv (git clone + uv sync)
+        - From source with pip (git clone + pip install -e)
+        - Docker image
+        - Windows bundle (.exe)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: EraseDub version
+      description: Output of `erasedub version`.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+      description: GPU model and NVIDIA driver version, or "none".
+      placeholder: RTX 3060 12 GB, driver 580.xx
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Full output as text. Run with the same options that failed.
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Input video properties (resolution, length, codec), source/target languages, providers used.
