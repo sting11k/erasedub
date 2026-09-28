@@ -1,0 +1,80 @@
+name: Installation problem
+description: EraseDub fails to install or `erasedub doctor` reports a problem.
+title: "install: "
+labels: ["install"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check [Troubleshooting](https://github.com/sting11k/erasedub/blob/main/docs/troubleshooting.md)
+        and the [installation guides](https://github.com/sting11k/erasedub/tree/main/docs/install) first — most
+        GPU, CUDA and ffmpeg problems are covered there.
+
+        **Remove API keys, tokens and signed URLs from everything you paste below**, and personal
+        information such as your user name in file paths (`C:\Users\<user>\...`, `/home/<user>/...`) —
+        `erasedub doctor` and error output print absolute paths.
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - From source with uv (git clone + uv sync)
+        - From source with pip (git clone + pip install -e)
+        - Docker image
+        - Windows bundle (.exe)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you run?
+      description: The exact install commands, including extras (for example `uv sync --extra full`).
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error output
+      description: The full error output as text, not a screenshot.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `erasedub doctor`
+      description: If EraseDub installed but something is reported missing. Leave empty if the install itself failed.
+      render: text
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: Output of `python --version` (not needed for Docker or the Windows bundle).
+      placeholder: Python 3.12.7
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+      description: GPU model and the driver version from `nvidia-smi`, or "none".
+      placeholder: RTX 4070 8 GB, driver 580.xx
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Proxy or corporate network, conda environment, other CUDA or ffmpeg installs on PATH, etc.

@@ -1,0 +1,236 @@
+name: Release
+
+# The ONLY workflow triggered by `v*` tags, and the only one that creates or publishes the
+# GitHub Release. Order:
+#
+#   version check -> test -> build + attest -> draft release -+-> ghcr -----------+-> publish release
+#                                                             +-> windows-bundle -+
+#
+# EraseDub is not published to PyPI; the wheel and sdist are attached to the GitHub Release only.
+#
+# The release stays a draft until every job succeeded. See docs/dev/ci.md ("Making a release").
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.12.19"
+  # sha256 of uv-x86_64-unknown-linux-gnu.tar.gz for UV_VERSION (GitHub release asset digest).
+  # Bump together with UV_VERSION. All jobs below that install uv run on ubuntu x86_64.
+  UV_CHECKSUM: "23bf5552d220e0842b65c862097b2ebaeba0064b74eda5e565e77fd25969d8c8"
+  # Build backend pinned for release builds (pyproject only says hatchling>=1.27).
+  HATCHLING_VERSION: "1.32.4"
+  IMAGE: ghcr.io/sting11k/erasedub
+  FORCE_COLOR: "1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  version:
+    name: tag matches package version
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_CHECKSUM }}
+          enable-cache: false
+      - name: Compare tag and version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(uvx "hatchling@${HATCHLING_VERSION}" version)"
+          if [ "v${version}" != "${TAG}" ]; then
+            echo "::error::Tag ${TAG} does not match the package version ${version}."
+            exit 1
+          fi
+
+  test:
+    name: test (ubuntu, py3.12)
+    needs: version
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_CHECKSUM }}
+          python-version: "3.12"
+          enable-cache: false
+      - run: uv sync --locked
+      - run: uv run pytest
+
+  build:
+    name: build dists + attest
+    needs: test
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # OIDC for the provenance attestation
+      attestations: write # store the provenance attestation
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_CHECKSUM }}
+          python-version: "3.12"
+          # No shared cache in release builds (cache poisoning).
+          enable-cache: false
+      - name: Build
+        run: |
+          echo "hatchling==${HATCHLING_VERSION}" > "${RUNNER_TEMP}/build-constraints.txt"
+          uv build --build-constraint "${RUNNER_TEMP}/build-constraints.txt"
+      - run: uvx twine@7.0.0 check --strict dist/*
+      - name: Check the wheel carries the tag's version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ ! -f "dist/erasedub-${TAG#v}-py3-none-any.whl" ]; then
+            echo "::error::No wheel for ${TAG} in dist/:"
+            ls dist/
+            exit 1
+          fi
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  draft:
+    name: draft GitHub Release
+    needs: build
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # create the draft release and upload the dists
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags=(--draft --verify-tag --generate-notes --title "EraseDub ${TAG}")
+          # PEP 440 pre-releases (0.1.0a1, 0.1.0rc1, 0.1.0.dev1) are marked as such.
+          if [[ "${TAG}" =~ (a|b|rc|dev)[0-9]+$ ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "${TAG}" dist/* "${flags[@]}"
+
+  ghcr:
+    name: push image to GHCR
+    needs: draft
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: ghcr
+      url: https://github.com/sting11k/erasedub/pkgs/container/erasedub
+    permissions:
+      contents: read
+      packages: write # push to ghcr.io
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Free disk space
+        # The image bundles PyTorch; drop large preinstalled toolchains we do not use.
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          # PEP 440 so 0.1.0rc1 does not move the `latest` / `0.1` tags.
+          tags: |
+            type=pep440,pattern={{version}}
+            type=pep440,pattern={{major}}.{{minor}}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: Dockerfile
+          target: runtime
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          sbom: true
+
+  windows-bundle:
+    name: Windows bundle
+    needs: draft
+    if: github.repository == 'sting11k/erasedub'
+    # A called workflow can only use permissions its caller grants. windows-bundle.yml's
+    # upload job attests the bundle (id-token + attestations) and uploads it to the draft (contents).
+    permissions:
+      contents: write # upload the bundle to the draft release
+      id-token: write # OIDC for the bundle's provenance attestation
+      attestations: write # store the bundle's provenance attestation
+    # `./` rather than the newer `$/` self-repository syntax: actionlint does not accept `$/` yet, and a
+    # reusable-workflow path is resolved from this same commit, not from the runner's workspace.
+    uses: ./.github/workflows/windows-bundle.yml # zizmor: ignore[self-repository]
+    with:
+      tag: ${{ github.ref_name }}
+      upload: true
+
+  publish:
+    name: publish GitHub Release
+    needs: [ghcr, windows-bundle]
+    if: github.repository == 'sting11k/erasedub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # undraft the release
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "${TAG}" --draft=false

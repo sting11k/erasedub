@@ -1,0 +1,227 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "erasedub"
+dynamic = ["version"]
+description = "Remove burned-in subtitles, translate and dub videos in one local tool."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.11"
+authors = [{ name = "The EraseDub Authors" }]
+keywords = [
+  "video-translation",
+  "video-translator",
+  "subtitle-translation",
+  "subtitle-removal",
+  "hardsub",
+  "hardcoded-subtitles",
+  "dubbing",
+  "ai-dubbing",
+  "video-dubbing",
+  "video-localization",
+  "text-to-speech",
+  "tts",
+  "speech-to-text",
+  "speech-recognition",
+  "asr",
+  "whisper",
+  "inpainting",
+  "video-inpainting",
+  "ocr",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Environment :: GPU :: NVIDIA CUDA",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Multimedia :: Sound/Audio :: Speech",
+  "Typing :: Typed",
+]
+# Core install = CLI + the no-key default providers (Google Translate free, Edge-TTS).
+# Heavy, GPU or paid-key providers live in extras so the core install stays light.
+dependencies = [
+  "typer>=0.20",
+  "rich>=13",
+  "pydantic>=2.7",
+  "deep-translator>=1.11",
+  "edge-tts>=7.0",
+]
+
+[project.optional-dependencies]
+# Speech recognition + word timestamps (pulls PyTorch).
+# whisperx does not support Python 3.14 yet; the ASR provider reports this clearly at runtime.
+asr = ["whisperx>=3.8; python_version < '3.14'"]
+# On-screen text detection used to build the erase mask (PP-OCRv6 models need RapidOCR 3.9; it brings OpenCV).
+ocr = ["rapidocr>=3.9", "onnxruntime>=1.18"]
+# Local hardsub removal (STTN by default). Needs an NVIDIA GPU to be practical.
+# OpenCV is `opencv-python` everywhere: rapidocr depends on it, and a second OpenCV distribution
+# (e.g. -headless) would overwrite the same `cv2` package.
+# Note: PyPI torch wheels are CPU-only on Windows; see docs/install/windows.md for the CUDA build.
+erase = ["torch>=2.4", "opencv-python>=4.10", "numpy>=1.26"]
+# Opt-in erasers, never in `full`. Weights (and ProPainter's code) are fetched, pinned and checked, at first use.
+# ProPainter: NVIDIA GPU; S-Lab License 1.0, non-commercial use only.
+propainter = [
+  "torch>=2.4",
+  "torchvision>=0.19",
+  "opencv-python>=4.10",
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "einops>=0.8",
+  "pillow>=10.4",
+]
+# LaMa: no NVIDIA GPU needed (CPU or Apple GPU), one frame at a time: may flicker and flatten repeating
+# patterns.
+lama = ["torch>=2.4", "opencv-python>=4.10", "numpy>=1.26"]
+# Bring-your-own-key LLM translators.
+llm = ["openai>=1.40", "google-genai>=1.0", "anthropic>=0.40"]
+# Local LLM translation through an Ollama server (no key).
+ollama = ["ollama>=0.4"]
+# Bring-your-own-key ElevenLabs voices.
+elevenlabs = ["httpx>=0.27"]
+# Run only the erase step on Modal with the user's own Modal token (`--gpu modal`).
+modal = ["modal>=1.5"]
+webui = ["gradio>=6.0"]
+# Everything that runs locally without paid keys.
+full = ["erasedub[asr,ocr,erase,ollama,webui]"]
+
+[project.scripts]
+erasedub = "erasedub.cli:main"
+
+# Built-in providers. Third-party packages register their own under the same groups
+# (see docs/plugins.md); the engine never imports a provider until it is selected.
+[project.entry-points."erasedub.eraser"]
+sttn = "erasedub.providers.eraser_sttn:SttnEraser"
+propainter = "erasedub.providers.eraser_propainter:ProPainterEraser"
+lama = "erasedub.providers.eraser_lama:LamaEraser"
+none = "erasedub.providers.eraser_none:NoEraser"
+
+[project.entry-points."erasedub.asr"]
+whisperx = "erasedub.providers.asr_whisperx:WhisperXTranscriber"
+
+[project.entry-points."erasedub.ocr"]
+rapidocr = "erasedub.providers.ocr_rapidocr:RapidOcrDetector"
+
+[project.entry-points."erasedub.translator"]
+google = "erasedub.providers.translate_google:GoogleFreeTranslator"
+openai = "erasedub.providers.translate_llm:OpenAITranslator"
+gemini = "erasedub.providers.translate_llm:GeminiTranslator"
+claude = "erasedub.providers.translate_llm:ClaudeTranslator"
+ollama = "erasedub.providers.translate_llm:OllamaTranslator"
+
+[project.entry-points."erasedub.tts"]
+edge = "erasedub.providers.tts_edge:EdgeTTS"
+elevenlabs = "erasedub.providers.tts_elevenlabs:ElevenLabsTTS"
+
+[project.entry-points."erasedub.layout"]
+bottom = "erasedub.providers.layout_bottom:BottomLayout"
+
+[project.entry-points."erasedub.gpu"]
+local = "erasedub.providers.gpu_local:LocalGpu"
+modal = "erasedub.providers.gpu_modal:ModalGpu"
+
+[project.urls]
+Homepage = "https://github.com/sting11k/erasedub"
+Documentation = "https://github.com/sting11k/erasedub/tree/main/docs"
+Issues = "https://github.com/sting11k/erasedub/issues"
+Changelog = "https://github.com/sting11k/erasedub/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "pytest-cov>=5.0",
+  "mypy>=1.13",
+  "ruff>=0.8",
+  "pre-commit>=4.0",
+]
+
+[tool.hatch.version]
+path = "src/erasedub/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/erasedub", "tests", "LICENSE", "NOTICE", "README.md", "CHANGELOG.md", "examples"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/erasedub"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "B", "UP", "SIM", "RUF", "C4", "PTH", "S", "T20", "N",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S108"]
+# The one module that shells out (nvidia-smi, ffmpeg): argv lists, no shell, executables resolved via shutil.which.
+"src/erasedub/hardware.py" = ["S603"]
+"src/erasedub/providers/_audio.py" = ["S603"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+# Untyped third-party packages (imported lazily inside providers). Add entries when mypy asks.
+module = [
+  "whisperx.*", "rapidocr.*", "gradio.*", "edge_tts.*", "deep_translator.*", "modal.*", "torch.*", "cv2.*",
+  "openai.*", "anthropic.*", "google", "google.genai.*", "ollama.*", "httpx.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Model code adapted from upstream repositories: it subclasses torch.nn.Module, which is untyped here (torch
+# is not installed for type checking). Imported only when an eraser runs.
+module = ["erasedub.providers._vendor.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+# Gradio (webui extra) is typed, but following it, or pytest's numpy-aware `approx` module, reaches numpy's
+# stubs, which use Python 3.12 `type` statements and fail under python_version = 3.11 whenever numpy is
+# installed (webui, erase or asr extras). Skipping these modules keeps them as Any. Skipping numpy itself does
+# not help: follow_imports does not apply to .pyi stubs. See also the ignore_missing_imports block above.
+module = ["gradio", "gradio.*", "_pytest.python_api"]
+follow_imports = "skip"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = ["-ra", "--strict-markers", "--strict-config", "-m", "not slow and not gpu and not network"]
+testpaths = ["tests"]
+markers = [
+  "gpu: needs an NVIDIA GPU (deselected by default; run with -m gpu)",
+  "network: needs internet access (deselected by default; run with -m network)",
+  "slow: processes real media (deselected by default; run with -m slow)",
+  "webui: needs the webui extra (Gradio); skipped without it, run alone with -m webui",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["erasedub"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.codespell]
+skip = "*.lock,*.svg,README.zh-CN.md,README.vi.md,docs/zh-CN/*,docs/vi/*"
+ignore-words-list = "dub,te,lama"

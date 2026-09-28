@@ -1,0 +1,27 @@
+# lychee link checker config (https://lychee.cli.rs), read automatically from the repository root.
+# How to run it locally and in CI: docs/dev/ci.md ("Checking links").
+
+no_progress = true
+
+# Check `#anchor` fragments too, in local Markdown files and in fetched pages.
+include_fragments = "anchor-only"
+
+# Links inside code blocks are examples, not links.
+include_verbatim = false
+
+max_retries = 3
+retry_wait_time = 5
+timeout = 30
+# 429 = rate-limited: the site exists, it only asked us to slow down.
+accept = ["200..=299", "429"]
+
+# Local services that only exist on the reader's machine (web UI, Ollama in Docker).
+exclude_loopback = true
+
+exclude = [
+  # The container image page exists once the first release tag has pushed the image (release.yml).
+  # Delete this line after that release (docs/dev/release-checklist.md).
+  '^https://ghcr\.io/sting11k/erasedub(/|$)',
+  # Docker host alias used in a compose example; not a real host.
+  '^https?://host\.docker\.internal',
+]

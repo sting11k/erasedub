@@ -1,0 +1,54 @@
+# Dependabot version updates. Security updates are enabled separately in repo settings
+# (see docs/dev/ci.md). Everything is grouped to keep PR noise low.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Wait a week before proposing a new release (limits exposure to hijacked releases).
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+      include: scope
+    labels: [dependencies]
+    groups:
+      python-dev:
+        dependency-type: development
+        update-types: [minor, patch]
+      python-runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Wait a week before proposing a new release (limits exposure to hijacked releases).
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    labels: [dependencies, ci]
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Wait a week before proposing a new release (limits exposure to hijacked releases).
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+    labels: [dependencies, packaging]
+    groups:
+      docker:
+        patterns: ["*"]

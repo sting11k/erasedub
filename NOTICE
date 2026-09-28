@@ -1,0 +1,18 @@
+EraseDub
+Copyright 2026 The EraseDub Authors
+
+This product includes software developed by The EraseDub Authors
+(https://github.com/sting11k/erasedub).
+
+Third-party code
+----------------
+
+src/erasedub/providers/_vendor/ contains inference code adapted from:
+
+* STTN (https://github.com/researchmm/STTN), MIT License; see
+  src/erasedub/providers/_vendor/LICENSE-STTN.txt.
+* LaMa (https://github.com/advimman/lama), Apache License 2.0; see
+  src/erasedub/providers/_vendor/LICENSE-LAMA.txt.
+
+Model weights and the ProPainter code are not distributed with EraseDub; they are downloaded at first use
+under their own licences (ProPainter: S-Lab License 1.0, non-commercial use only).

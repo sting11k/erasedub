@@ -1,0 +1,102 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# Tooling caches
+.tox/
+.nox/
+.ipynb_checkpoints/
+wheels/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Secrets — keys live in the environment or a local .env, never in git
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+.envrc
+.modal.toml
+
+# EraseDub working data and outputs
+work/
+outputs/
+*.erasedub-work/
+.gradio/
+flagged/
+
+# Model caches and weights directories
+.cache/
+models/
+checkpoints/
+weights/
+pretrained_models/
+
+# Media and model weights never belong in git. Demo videos live in releases; only the animated WebP
+# previews and comparisons for the READMEs are in docs/assets/.
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.flv
+*.m4v
+*.wmv
+*.mpg
+*.mpeg
+*.3gp
+*.ogg
+*.opus
+*.aac
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+*.bin
+*.npy
+*.npz
+*.gguf
+*.h5
+*.tflite
+*.engine
+*.trt
+*.pkl
+*.pickle
+
+# Native binaries (e.g. GPL ffmpeg builds) are downloaded at build time, never committed
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Packaging artifacts
+packaging/windows/build/
+packaging/windows/dist/
+*.spec.bak
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

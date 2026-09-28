@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use EraseDub in your work, please cite it using the metadata below."
+type: software
+title: "EraseDub"
+abstract: >-
+  EraseDub removes burned-in subtitles from videos, translates the speech,
+  and dubs the video with new voices and subtitles, running on the user's own machine.
+authors:
+  - name: "The EraseDub Authors"
+version: 0.1.0
+license: Apache-2.0
+repository-code: "https://github.com/sting11k/erasedub"
+keywords:
+  - video-translation
+  - video-translator
+  - subtitle-translation
+  - subtitle-removal
+  - hardsub
+  - hardcoded-subtitles
+  - dubbing
+  - ai-dubbing
+  - video-dubbing
+  - video-localization
+  - text-to-speech
+  - tts
+  - speech-to-text
+  - speech-recognition
+  - asr
+  - whisper
+  - inpainting
+  - video-inpainting
+  - ocr

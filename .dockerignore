@@ -1,0 +1,71 @@
+# Keep the build context small and free of secrets, media and weights.
+# The image only needs pyproject.toml, uv.lock, README.md, LICENSE, NOTICE, src/ and
+# packaging/build-constraints.txt.
+
+# VCS and CI
+.git
+.github
+.gitattributes
+.pre-commit-config.yaml
+
+# Python environments and caches
+.venv
+venv
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov
+build
+dist
+*.egg-info
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+.modal.toml
+
+# Working data, inputs and outputs
+work
+outputs
+videos
+*.erasedub-work
+
+# Media and model weights
+**/*.mp4
+**/*.mov
+**/*.mkv
+**/*.webm
+**/*.avi
+**/*.wav
+**/*.mp3
+**/*.m4a
+**/*.flac
+**/*.pth
+**/*.pt
+**/*.ckpt
+**/*.safetensors
+**/*.onnx
+**/*.bin
+models
+
+# Not needed inside the image
+docs
+tests
+packaging
+!packaging/build-constraints.txt
+compose.yaml
+Dockerfile
+.dockerignore
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp

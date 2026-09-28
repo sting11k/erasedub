@@ -1,0 +1,48 @@
+# Example: run the EraseDub WebUI in Docker with an NVIDIA GPU (linux/amd64 hosts).
+#
+#   mkdir -p data && docker compose up --build
+#   then open http://127.0.0.1:7860
+#
+# Needs the NVIDIA driver and NVIDIA Container Toolkit on the host (docs/install/docker.md).
+# Without a GPU, delete the `deploy:` block; text erasing is then skipped, everything else runs.
+#
+# ./data is mounted at /data (the container's working directory): put videos there, results appear
+# in ./data/work. To write those files as your own user (recommended on Linux), start it with
+#   ERASEDUB_UID=$(id -u) ERASEDUB_GID=$(id -g) docker compose up --build
+# Otherwise it runs as the image's default uid 10001, which needs `sudo chown -R 10001 data`.
+services:
+  erasedub:
+    # Local build. To use the official image instead, set `image: ghcr.io/sting11k/erasedub:0.1`
+    # and remove `build` and `pull_policy`.
+    image: erasedub:local
+    build: .
+    pull_policy: build
+    command: ["webui", "--host", "0.0.0.0", "--port", "7860"]
+    # The WebUI has no login. Keep it bound to localhost unless you put it behind your own auth.
+    ports:
+      - "127.0.0.1:7860:7860"
+    volumes:
+      - ./data:/data
+      - erasedub-cache:/home/erasedub/.cache # downloaded models survive restarts
+    user: "${ERASEDUB_UID:-10001}:${ERASEDUB_GID:-10001}"
+    environment:
+      # Optional keys are passed through from your shell only if set there. Never write them here.
+      # The image contains the `full` extra (ASR, OCR, erase, Ollama, WebUI). The OpenAI/Gemini/Claude
+      # translators need the `llm` extra, which is not in the image.
+      - ELEVENLABS_API_KEY
+      - HF_TOKEN
+      # Ollama running on the host (not in this container).
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # needed on Linux; Docker Desktop provides it already
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: "no"
+
+volumes:
+  erasedub-cache:

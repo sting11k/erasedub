@@ -1,0 +1,10 @@
+# CUDA builds of PyTorch for the Windows bundle (Python 3.12, win_amd64).
+#
+# This is the ONLY non-PyPI source in the bundle: PyTorch wheels on PyPI are CPU-only on Windows,
+# so CUDA wheels come from the official PyTorch index (download.pytorch.org). Versions must match
+# what uv.lock resolves for torch/torchaudio/torchvision (whisperx currently pins torch~=2.8.0).
+# Hashes copied from https://download.pytorch.org/whl/cu128/<package>/ (verified 2026-09-26).
+# build.ps1 drops the PyPI torch entries from the uv export and appends these lines instead.
+torch @ https://download.pytorch.org/whl/cu128/torch-2.8.0%2Bcu128-cp312-cp312-win_amd64.whl --hash=sha256:0ad925202387f4e7314302a1b4f8860fa824357f9b1466d7992bf276370ebcff
+torchaudio @ https://download.pytorch.org/whl/cu128/torchaudio-2.8.0%2Bcu128-cp312-cp312-win_amd64.whl --hash=sha256:cce3a60cd9a97f7360c8f95504ac349311fb7d6b9b826135936764f4de5f782d
+torchvision @ https://download.pytorch.org/whl/cu128/torchvision-0.23.0%2Bcu128-cp312-cp312-win_amd64.whl --hash=sha256:20fa9c7362a006776630b00b8a01919fedcf504a202b81358d32c5aef39956fe
